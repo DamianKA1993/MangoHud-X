@@ -25,6 +25,7 @@
 
 #include "overlay_params.h"
 #include "overlay.h"
+#include "custom_layout.h"
 #include "config.h"
 #include "string_utils.h"
 #include "hud_elements.h"

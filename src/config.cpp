@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <spdlog/spdlog.h>
+#include "custom_layout.h"
 #include "config.h"
 #include "file_utils.h"
 #include "string_utils.h"
@@ -106,20 +107,27 @@ void parseConfigFile(overlay_params& params) {
         paths.push_back(cfg_file);
     else
         enumerate_config_files(paths);
-#ifdef _WIN32
+    #ifdef _WIN32
     paths.push_back("C:\\mangohud\\MangoHud.conf");
-#endif
+    #endif
     std::string line;
     for (auto p = paths.rbegin(); p != paths.rend(); p++) {
         std::ifstream stream(*p);
         if (!stream.good()) {
-            // printing just so user has an idea of possible configs
             SPDLOG_DEBUG("skipping config: '{}' [ not found ]", *p);
             continue;
         }
 
         stream.imbue(std::locale::classic());
         SPDLOG_DEBUG("parsing config: '{}'", *p);
+
+        // Jeśli plik to nasz custom layout, wczytujemy strukturę i wstrzykujemy flagi
+        if (load_custom_hud_config(*p, params.options)) {
+            params.config_file_path = *p;
+            return;
+        }
+
+        // Standardowy fallback MangoHud dla zwykłych plików konfiguracyjnych
         while (std::getline(stream, line))
         {
             parseConfigLine(line, params.options);

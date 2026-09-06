@@ -10,9 +10,11 @@
 #include <filesystem.h>
 // #include <sys/stat.h>
 #include "overlay.h"
+#include "custom_layout.h"
 #include "cpu.h"
 #include "gpu.h"
 #include "hud_elements.h"
+#include "implot.h"
 #include "memory.h"
 #include "timing.hpp"
 #include "fcat.h"
@@ -49,6 +51,7 @@ double min_frametime, max_frametime;
 bool gpu_metrics_exists = false;
 bool steam_focused = false;
 vector<float> frametime_data(200,0.f);
+extern std::unique_ptr<GPUS> gpus;
 int fan_speed;
 fcatoverlay fcatstatus;
 std::string drm_dev;
@@ -116,7 +119,7 @@ void update_hw_info(const struct overlay_params& params, uint32_t vendorID)
          cpuStats.UpdateCpuPower();
 #endif
    }
-   if (real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_stats] || logger->is_active()) {
+   if (real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_stats] || logger->is_active() || g_custom_hud.window.is_custom_config) {
       if (gpus)
          gpus->get_metrics();
    }
@@ -361,50 +364,50 @@ void position_layer(struct swapchain_stats& data, const struct overlay_params& p
    ImGui::SetNextWindowBgAlpha(real_params->background_alpha);
    ImGui::SetNextWindowSize(window_size, ImGuiCond_Always);
    switch (real_params->position) {
-   case LAYER_POSITION_TOP_LEFT:
-      data.main_window_pos = ImVec2(margin + real_params->offset_x, margin + real_params->offset_y);
+      case LAYER_POSITION_TOP_LEFT:
+         data.main_window_pos = ImVec2(margin + real_params->offset_x, margin + real_params->offset_y);
+         ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
+         break;
+      case LAYER_POSITION_TOP_RIGHT:
+         data.main_window_pos = ImVec2(width - window_size.x - margin - real_params->offset_x, margin + real_params->offset_y);
+         ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
+         break;
+      case LAYER_POSITION_MIDDLE_LEFT:
+         data.main_window_pos = ImVec2(margin + params.offset_x, height / 2 - window_size.y / 2 - margin + real_params->offset_y);
+         ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
+         break;
+      case LAYER_POSITION_MIDDLE_RIGHT:
+         data.main_window_pos = ImVec2(width - window_size.x - margin - real_params->offset_x, height / 2 - window_size.y / 2 - margin + real_params->offset_y);
+         ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
+         break;
+      case LAYER_POSITION_BOTTOM_LEFT:
+         data.main_window_pos = ImVec2(margin + real_params->offset_x, height - window_size.y - margin - real_params->offset_y);
+         ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
+         break;
+      case LAYER_POSITION_BOTTOM_RIGHT:
+         data.main_window_pos = ImVec2(width - window_size.x - margin - real_params->offset_x, height - window_size.y - margin - real_params->offset_y);
+         ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
+         break;
+      case LAYER_POSITION_TOP_CENTER:
+         if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && !real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal_stretch]) {
+            float content_width = ( real_params->table_columns  * 64);
+            data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2) - content_width, margin +  real_params->offset_y);
+         }
+         else
+            data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2), margin + real_params->offset_y);
       ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
       break;
-   case LAYER_POSITION_TOP_RIGHT:
-      data.main_window_pos = ImVec2(width - window_size.x - margin + real_params->offset_x, margin + real_params->offset_y);
+      case LAYER_POSITION_BOTTOM_CENTER:
+         if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && !real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal_stretch]) {
+            float content_width = (real_params->table_columns  * 64);
+            data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2) - content_width,  height - window_size.y - margin - real_params->offset_y);
+         }
+         else
+            data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2), height - window_size.y - margin - real_params->offset_y);
       ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
       break;
-   case LAYER_POSITION_MIDDLE_LEFT:
-      data.main_window_pos = ImVec2(margin + params.offset_x, height / 2 - window_size.y / 2 - margin + real_params->offset_y);
-      ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
-      break;
-   case LAYER_POSITION_MIDDLE_RIGHT:
-      data.main_window_pos = ImVec2(width - window_size.x - margin + real_params->offset_x, height / 2 - window_size.y / 2 - margin + real_params->offset_y);
-      ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
-      break;
-   case LAYER_POSITION_BOTTOM_LEFT:
-      data.main_window_pos = ImVec2(margin +real_params->offset_x, height - window_size.y - margin + real_params->offset_y);
-      ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
-      break;
-   case LAYER_POSITION_BOTTOM_RIGHT:
-      data.main_window_pos = ImVec2(width - window_size.x - margin + real_params->offset_x, height - window_size.y - margin + real_params->offset_y);
-      ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
-      break;
-   case LAYER_POSITION_TOP_CENTER:
-      if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && !real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal_stretch]) {
-         float content_width = ( real_params->table_columns  * 64);
-         data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2) - content_width, margin +  real_params->offset_y);
-      }
-      else
-         data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2), margin + real_params->offset_y);
-      ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
-      break;
-   case LAYER_POSITION_BOTTOM_CENTER:
-      if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && !real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal_stretch]) {
-         float content_width = (real_params->table_columns  * 64);
-         data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2) - content_width,  height - window_size.y - margin + real_params->offset_y);
-      }
-      else
-         data.main_window_pos = ImVec2((width / 2) - (window_size.x / 2), height - window_size.y - margin + real_params->offset_y);
-      ImGui::SetNextWindowPos(data.main_window_pos, ImGuiCond_Always);
-      break;
-   case LAYER_POSITION_COUNT:
-      break;
+      case LAYER_POSITION_COUNT:
+         break;
    }
 }
 
@@ -660,13 +663,23 @@ void horizontal_separator(struct overlay_params& params) {
     ImGui::Spacing();
 }
 
+inline uint32_t get_brand_color(const std::string& gpu_name) {
+   if (gpu_name.find("NVIDIA") != std::string::npos || gpu_name.find("GeForce") != std::string::npos) {
+      return parse_hex_color("#76B900"); // Zieleń Nvidii
+   } else if (gpu_name.find("AMD") != std::string::npos || gpu_name.find("Radeon") != std::string::npos) {
+      return parse_hex_color("#ED1C24"); // Czerwień AMD
+   } else if (gpu_name.find("Intel") != std::string::npos || gpu_name.find("Arc") != std::string::npos) {
+      return parse_hex_color("#0071C5"); // Błękit Intel
+   }
+   return 0xFFFFFFFF; // Domyślnie biały
+}
+
 void render_imgui(swapchain_stats& data, struct overlay_params& params, ImVec2& window_size, bool is_vulkan)
 {
    {
       std::unique_lock<std::mutex> lock(config_mtx);
       config_cv.wait(lock, []{ return config_ready; });
    }
-   // data.engine = EngineTypes::GAMESCOPE;
    HUDElements.sw_stats = &data;
    auto real_params = get_params();
    if (real_params)
@@ -679,7 +692,8 @@ void render_imgui(swapchain_stats& data, struct overlay_params& params, ImVec2& 
    if (real_params->enabled[OVERLAY_PARAM_ENABLED_fps_only]){
       window_size = ImVec2((to_string(int(HUDElements.sw_stats->fps)).length() * ImGui::CalcTextSize("A").x) + 15.f, get_params()->height);
    } else if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal]) {
-      window_size = ImVec2(io.DisplaySize.x, real_params->height);
+      float margin = g_custom_hud.window.is_custom_config ? (g_custom_hud.window.offset_x * 2) : 0.0f;
+      window_size = ImVec2(io.DisplaySize.x - margin, real_params->height);
    } else {
       window_size = ImVec2(real_params->width, real_params->height);
    }
@@ -687,7 +701,7 @@ void render_imgui(swapchain_stats& data, struct overlay_params& params, ImVec2& 
    auto now = Clock::now();
 
    if (old_scale != real_params->font_scale) {
-      HUDElements.ralign_width = ralign_width = ImGui::CalcTextSize("A").x * 4 /* characters */;
+      HUDElements.ralign_width = ralign_width = ImGui::CalcTextSize("A").x * 4;
       old_scale = real_params->font_scale;
    }
    ImGuiTableFlags table_flags = ImGuiTableFlags_NoClip;
@@ -695,53 +709,255 @@ void render_imgui(swapchain_stats& data, struct overlay_params& params, ImVec2& 
       table_flags = ImGuiTableFlags_NoClip | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoHostExtendX;
 
    if (!real_params->no_display && !steam_focused && get_params()->table_columns){
+      float window_round = g_custom_hud.window.round;
+      ImVec4 bg_color = ImGui::ColorConvertU32ToFloat4(g_custom_hud.window.background);
+
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, window_round);
+      ImGui::PushStyleColor(ImGuiCol_WindowBg, bg_color);
       ImGui::Begin("Main", &gui_open, ImGuiWindowFlags_NoDecoration);
-      if (ImGui::BeginTable("hud", real_params->table_columns, table_flags )) {
-         HUDElements.place = 0;
-         for (auto& func : HUDElements.ordered_functions){
-            if(!real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && func.name != "exec")
-               ImGui::TableNextRow();
-            func.run();
-            HUDElements.place += 1;
-            if(!HUDElements.ordered_functions.empty() && real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && HUDElements.ordered_functions.size() != (size_t)HUDElements.place)
-               horizontal_separator(params);
+
+      if (g_custom_hud.window.is_custom_config) {
+         if (real_params) {
+            real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_stats] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_temp] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_core_clock] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_power] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_gpu_load_change] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_cpu_stats] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_vram] = true;
+            real_params->enabled[OVERLAY_PARAM_ENABLED_ram] = true;
          }
 
-         if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal]) {
-            if (HUDElements.table_columns_count > 0 && HUDElements.table_columns_count < 65 )
-               real_params->table_columns = HUDElements.table_columns_count;
-            if(!real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal_stretch]) {
-               float content_width = ImGui::GetContentRegionAvail().x - (real_params->table_columns * 64);
-               window_size = ImVec2(content_width, real_params->height);
+         std::shared_ptr<GPU> active_gpu = nullptr;
+         if (gpus) {
+            active_gpu = gpus->active_gpu();
+            if (!active_gpu) {
+               auto selected = gpus->selected_gpus();
+               if (!selected.empty())
+                  active_gpu = selected.back();
             }
          }
-         ImGui::EndTable();
-         HUDElements.table_columns_count = 0;
+
+         float current_frametime = frametime_data.empty() ? (data.fps > 0 ? 1000.0f / data.fps : 0.0f) : frametime_data.back();
+
+         int row_index = 0;
+         for (const auto& row : g_custom_hud.rows) {
+            if (row.is_separator) {
+               ImGui::Separator();
+               continue;
+            }
+
+            if (row.cols.empty()) continue;
+
+            std::string table_id = "custom_row_" + std::to_string(row_index++);
+            if (ImGui::BeginTable(table_id.c_str(), row.cols.size(), table_flags)) {
+
+               for (size_t col_idx = 0; col_idx < row.cols.size(); ++col_idx) {
+                  ImGui::TableNextColumn();
+                  const auto& col = row.cols[col_idx];
+
+                  if (col.is_separator) {
+                     ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+                     float avail_width = ImGui::GetContentRegionAvail().x;
+
+                     uint32_t active_sep_color = col.use_brand_color ? get_brand_color(data.gpuName) : col.color;
+                     ImVec4 sep_color = ImGui::ColorConvertU32ToFloat4(active_sep_color);
+                     sep_color.w *= col.opacity;
+                     ImU32 u32_sep_color = ImGui::ColorConvertFloat4ToU32(sep_color);
+
+                     ImGui::GetWindowDrawList()->AddLine(
+                        ImVec2(cursor_pos.x, cursor_pos.y + 8),
+                                                         ImVec2(cursor_pos.x + avail_width, cursor_pos.y + 8),
+                                                         u32_sep_color,
+                                                         1.0f
+                     );
+
+                     ImGui::Dummy(ImVec2(avail_width, 16.0f));
+                     continue;
+                  }
+
+                  std::string text = col.text;
+                  char buf[64];
+                  size_t pos = std::string::npos;
+
+                  if (text.find("{frametime_graph}") != std::string::npos) {
+                     ImPlot::PushStyleColor(ImPlotCol_PlotBg, ImVec4(0, 0, 0, 0));
+                     ImPlot::PushStyleColor(ImPlotCol_FrameBg, ImVec4(0, 0, 0, 0));
+
+                     uint32_t active_plot_color = col.use_brand_color ? get_brand_color(data.gpuName) : col.color;
+                     ImVec4 line_col = ImGui::ColorConvertU32ToFloat4(active_plot_color);
+                     line_col.w *= col.opacity;
+                     ImPlot::PushStyleColor(ImPlotCol_Line, line_col);
+
+                     float total_table_width = ImGui::GetContentRegionAvail().x;
+                     if (total_table_width < 50) total_table_width = 280;
+
+                     std::string plot_id = "##frametime_" + std::to_string(row_index) + "_" + std::to_string(col_idx);
+
+                     if (ImPlot::BeginPlot(plot_id.c_str(), ImVec2(total_table_width, 60), ImPlotFlags_NoMouseText | ImPlotFlags_CanvasOnly | ImPlotFlags_NoLegend)) {
+                        ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoDecorations, ImPlotAxisFlags_NoDecorations);
+                        ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 33, ImGuiCond_Always);
+                        if (!frametime_data.empty()) {
+                           ImPlot::PlotLine("##ft", frametime_data.data(), frametime_data.size());
+                        }
+                        ImPlot::EndPlot();
+                     }
+                     ImPlot::PopStyleColor(3);
+                     text = "";
+                  }
+
+                  pos = text.find("{gpu_name}");
+                  if (pos != std::string::npos) {
+                     std::string g_name = data.gpuName;
+                     if (g_name.empty()) {
+                        g_name = "GPU";
+                     } else {
+                        size_t nv_pos = g_name.find("NVIDIA ");
+                        if (nv_pos != std::string::npos) {
+                           g_name.erase(nv_pos, 7);
+                        }
+                     }
+                     text.replace(pos, 10, g_name);
+                  }
+
+                  if (active_gpu) {
+                     snprintf(buf, sizeof(buf), "%d", active_gpu->metrics.CoreClock);
+                     pos = text.find("{gpu_core_clock}");
+                     if (pos != std::string::npos) text.replace(pos, 16, buf);
+
+                     snprintf(buf, sizeof(buf), "%d", active_gpu->metrics.temp);
+                     pos = text.find("{gpu_temp}");
+                     if (pos != std::string::npos) text.replace(pos, 10, buf);
+
+                     snprintf(buf, sizeof(buf), "%.1f", active_gpu->metrics.powerUsage);
+                     pos = text.find("{gpu_power}");
+                     if (pos != std::string::npos) text.replace(pos, 11, buf);
+
+                     snprintf(buf, sizeof(buf), "%d", active_gpu->metrics.load);
+                     pos = text.find("{gpu_load}");
+                     if (pos != std::string::npos) text.replace(pos, 10, buf);
+
+                     snprintf(buf, sizeof(buf), "%.0f", active_gpu->metrics.sys_vram_used * 1024.0f);
+                     pos = text.find("{vram}");
+                     if (pos != std::string::npos) text.replace(pos, 6, buf);
+
+                     pos = text.find("{gpu_fan}");
+                     if (pos != std::string::npos) {
+                        int speed = active_gpu->metrics.fan_speed;
+                        snprintf(buf, sizeof(buf), "%d", speed);
+                        text.replace(pos, 9, buf);
+                     }
+                  }
+
+                  snprintf(buf, sizeof(buf), "%.0f", cpuStats.GetCPUDataTotal().percent);
+                  pos = text.find("{cpu_stats}");
+                  if (pos != std::string::npos) text.replace(pos, 11, buf);
+
+                  // Poprawny odczyt użycia RAM ze struktury cpuStats
+                  snprintf(buf, sizeof(buf), "%.0f", (float)memused * 1024.0f);
+                  pos = text.find("{ram}");
+                  if (pos != std::string::npos) text.replace(pos, 5, buf);
+
+                  pos = text.find("{driver_version}");
+                  if (pos != std::string::npos) {
+                     std::string d_ver = data.driverName;
+                     if (d_ver.empty()) {
+                        d_ver = "NVML / GL";
+                     }
+                     text.replace(pos, 16, d_ver);
+                  }
+
+                  snprintf(buf, sizeof(buf), "%d", (int)data.fps);
+                  pos = text.find("{fps}");
+                  if (pos != std::string::npos) text.replace(pos, 5, buf);
+
+                  snprintf(buf, sizeof(buf), "%.1f", current_frametime);
+                  pos = text.find("{frametime}");
+                  if (pos != std::string::npos) text.replace(pos, 11, buf);
+
+                  if (!text.empty()) {
+                     float font_scale = 1.0f;
+                     if (col.font_style == "small") {
+                        font_scale = 0.75f;
+                     } else if (col.font_style == "big") {
+                        font_scale = 1.4f;
+                     }
+                     ImGui::SetWindowFontScale(font_scale);
+
+                     if (col.align == CustomAlign::RIGHT) {
+                        float col_w = ImGui::GetColumnWidth();
+                        float txt_w = ImGui::CalcTextSize(text.c_str()).x;
+                        if (col_w > txt_w) {
+                           ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (col_w - txt_w));
+                        }
+                     }
+
+                     uint32_t active_text_color = col.use_brand_color ? get_brand_color(data.gpuName) : col.color;
+                     ImVec4 col_vec = ImGui::ColorConvertU32ToFloat4(active_text_color);
+                     col_vec.w *= col.opacity;
+                     ImGui::TextColored(col_vec, "%s", text.c_str());
+
+                     if (font_scale != 1.0f) {
+                        ImGui::SetWindowFontScale(1.0f);
+                     }
+                  }
+               }
+               ImGui::EndTable();
+            }
+         }
+      }
+      else {
+         if (ImGui::BeginTable("hud", real_params->table_columns, table_flags )) {
+            HUDElements.place = 0;
+            for (auto& func : HUDElements.ordered_functions){
+               if(!real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && func.name != "exec")
+                  ImGui::TableNextRow();
+               func.run();
+               HUDElements.place += 1;
+               if(!HUDElements.ordered_functions.empty() && real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal] && HUDElements.ordered_functions.size() != (size_t)HUDElements.place)
+                  horizontal_separator(params);
+            }
+
+            if (real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal]) {
+               if (HUDElements.table_columns_count > 0 && HUDElements.table_columns_count < 65 )
+                  real_params->table_columns = HUDElements.table_columns_count;
+               if(!real_params->enabled[OVERLAY_PARAM_ENABLED_horizontal_stretch]) {
+                  float content_width = ImGui::GetContentRegionAvail().x - (real_params->table_columns * 64);
+                  window_size = ImVec2(content_width, real_params->height);
+               }
+            }
+            ImGui::EndTable();
+            HUDElements.table_columns_count = 0;
+         }
       }
 
       if(logger->is_active())
          ImGui::GetWindowDrawList()->AddCircleFilled(ImVec2(data.main_window_pos.x + window_size.x - 15, data.main_window_pos.y + 15), 10, real_params->engine_color, 20);
       window_size = ImVec2(window_size.x, ImGui::GetCursorPosY() + 11.0f);
+
       ImGui::End();
+      ImGui::PopStyleColor();
+      ImGui::PopStyleVar();
+
       if((now - logger->last_log_end()) < 12s && !logger->is_active())
          render_benchmark(data, params, window_size, height, now);
    }
 
    if(real_params->enabled[OVERLAY_PARAM_ENABLED_fcat])
-     {
-       fcatstatus.update(&params);
-       auto window_corners = fcatstatus.get_overlay_corners();
-       auto p_min=window_corners[0];
-       auto p_max=window_corners[1];
-       auto window_size= window_corners[2];
-       ImGui::SetNextWindowPos(p_min, ImGuiCond_Always);
-       ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
-       ImGui::SetNextWindowSize(window_size);
-       ImGui::Begin("FCAT", &fcat_open, ImGuiWindowFlags_NoDecoration| ImGuiWindowFlags_NoBackground);
-       ImGui::GetWindowDrawList()->AddRectFilled(p_min,p_max,fcatstatus.get_next_color(data),0.0);
-       ImGui::End();
-       ImGui::PopStyleVar();
-     }
+   {
+      fcatstatus.update(&params);
+      auto window_corners = fcatstatus.get_overlay_corners();
+      auto p_min=window_corners[0];
+      auto p_max=window_corners[1];
+      auto window_size= window_corners[2];
+      ImGui::SetNextWindowPos(p_min, ImGuiCond_Always);
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+      ImGui::SetNextWindowSize(window_size);
+      ImGui::Begin("FCAT", &fcat_open, ImGuiWindowFlags_NoDecoration| ImGuiWindowFlags_NoBackground);
+      ImGui::GetWindowDrawList()->AddRectFilled(p_min,p_max,fcatstatus.get_next_color(data),0.0);
+      ImGui::End();
+      ImGui::PopStyleVar();
+   }
 }
 
 void init_cpu_stats(overlay_params& params)
