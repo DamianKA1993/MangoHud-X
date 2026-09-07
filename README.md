@@ -13,6 +13,11 @@ An enhanced fork of [MangoHud](https://github.com/flightlessmango/MangoHud) feat
 ```bash
 git clone https://github.com/DamianKA1993/MangoHud-X.git
 cd MangoHud-X
+
+#need to install dependencies
+#for CachyOS run:
+#sudo pacman -S --needed meson ninja gcc git cmake vulkan-devel wayland-protocols python-mako spdlog libglvnd libxnvctrl dbus yaml-cpp glew glfw
+
 meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
