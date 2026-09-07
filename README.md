@@ -8,6 +8,16 @@ An enhanced fork of [MangoHud](https://github.com/flightlessmango/MangoHud) feat
 
 ![mangohud-x-nvidia](assets/mangohud-x-amd.png)
 
+## 🚀 Instalation
+
+```bash
+git clone https://github.com/DamianKA1993/MangoHud-X.git
+cd MangoHud-X
+meson setup build --prefix=/usr
+ninja -C build
+sudo ninja -C build install
+```
+
 ## What's New in MangoHud-X?
 
 Unlike the upstream project, **MangoHud-X** introduces a complete custom layout engine designed for modular, modern, and highly customized HUD overlays.
