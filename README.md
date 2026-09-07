@@ -8,19 +8,20 @@ An enhanced fork of [MangoHud](https://github.com/flightlessmango/MangoHud) feat
 
 ![mangohud-x-nvidia](assets/mangohud-x-amd.png)
 
-## 🚀 Instalation
+## 🚀 Installation
 
 ```bash
-git clone https://github.com/DamianKA1993/MangoHud-X.git
-cd MangoHud-X
-
-#need to install dependencies
-#for CachyOS run:
+# Install dependencies (CachyOS / Arch Linux)
 #sudo pacman -S --needed meson ninja gcc git cmake vulkan-devel wayland-protocols python-mako spdlog libglvnd libxnvctrl dbus yaml-cpp glew glfw
 
+# Clone and build
+git clone https://github.com/DamianKA1993/MangoHud-X.git
+cd MangoHud-X
 meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
+
+# Deploy default config and fonts
 mkdir -p ~/.config/MangoHud
 cp -r _EXAMPLE/* ~/.config/MangoHud/
 ```
