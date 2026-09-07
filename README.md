@@ -24,7 +24,7 @@ cp -r _EXAMPLE/* ~/.config/MangoHud/
 
 Unlike the upstream project, **MangoHud-X** introduces a complete custom layout engine designed for modular, modern, and highly customized HUD overlays.
 
-* **Custom Layout Engine (`[window]` & `[layout]`):** Define your own layout structure directly via config, supporting custom rows, columns, alignment, and spacing.
+* **Custom Layout Engine (`[window]` & `[layout]`):** Define your own layout structure directly via config. Every row (`row`) supports an arbitrary number of columns (`col`)—mix 1, 2, 3, or 4 columns freely within the same configuration with per-element alignment and spacing.
 * **Brand Color Auto-Detection (`color = #brand`):** Automatically detects the active GPU vendor (NVIDIA green `#76B900`, AMD red `#ED1C24`, Intel blue `#0071C5`) and applies matching brand colors dynamically.
 * **Smart Multi-GPU / eGPU Telemetry Filtering:** Automatically binds telemetry strictly to the actively rendering GPU. Eliminates redundant multi-device clutter (no duplicate `gpu0`/`gpu1` or `vram0`/`vram1` blocks when using hybrid laptops or eGPU configurations).
 * **Granular Font & Opacity Control:** Scale specific elements (`font = big`, `font = small`) and adjust per-column transparency (`opacity = 0.5`).
