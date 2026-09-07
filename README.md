@@ -44,6 +44,7 @@ Unlike the upstream project, **MangoHud-X** introduces a complete custom layout 
 position = top-right
 offset_x = 200
 offset_y = 60
+#width=300
 
 gpu_stats
 gpu_temp
@@ -52,7 +53,6 @@ gpu_power
 cpu_stats
 gpu_fan
 vram
-pci_dev=0000:08:00.0
 
 
 font_file = /home/damian/.config/MangoHud/fonts/NotoSans-Bold.ttf
