@@ -26,7 +26,7 @@ Unlike the upstream project, **MangoHud-X** introduces a complete custom layout 
 
 * **Custom Layout Engine (`[window]` & `[layout]`):** Define your own layout structure directly via config, supporting custom rows, columns, alignment, and spacing.
 * **Brand Color Auto-Detection (`color = #brand`):** Automatically detects the active GPU vendor (NVIDIA green `#76B900`, AMD red `#ED1C24`, Intel blue `#0071C5`) and applies matching brand colors dynamically.
-* * **Smart Multi-GPU / eGPU Telemetry Filtering:** Automatically binds telemetry strictly to the actively rendering GPU. Eliminates redundant multi-device clutter (no duplicate `gpu0`/`gpu1` or `vram0`/`vram1` blocks when using hybrid laptops or eGPU configurations).
+* **Smart Multi-GPU / eGPU Telemetry Filtering:** Automatically binds telemetry strictly to the actively rendering GPU. Eliminates redundant multi-device clutter (no duplicate `gpu0`/`gpu1` or `vram0`/`vram1` blocks when using hybrid laptops or eGPU configurations).
 * **Granular Font & Opacity Control:** Scale specific elements (`font = big`, `font = small`) and adjust per-column transparency (`opacity = 0.5`).
 * **Window Styling & Anchoring:** Full control over window rounding, and screen positioning anchors.
 * **Fixed Anchor Offsets:** Corrected window offset calculation relative to `bottom` and `right` screen edges for precise and predictable placement.
