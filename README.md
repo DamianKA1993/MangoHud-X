@@ -5,6 +5,8 @@ An enhanced fork of [MangoHud](https://github.com/flightlessmango/MangoHud) feat
 ---
 
 ![mangohud-x](assets/mangohud-x.png)
+![mangohud-x-test](assets/mangohud-x-test.png)
+
 
 ## 🚀 Installation
 
