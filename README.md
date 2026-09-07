@@ -16,6 +16,8 @@ cd MangoHud-X
 meson setup build --prefix=/usr
 ninja -C build
 sudo ninja -C build install
+mkdir -p ~/.config/MangoHud
+cp -r _EXAMPLE/* ~/.config/MangoHud/
 ```
 
 ## What's New in MangoHud-X?
