@@ -24,6 +24,90 @@ mkdir -p ~/.config/MangoHud
 cp -r _EXAMPLE/* ~/.config/MangoHud/
 ```
 
+## Building & Installing 64-bit and 32-bit MangoHud on Arch Linux / CachyOS
+
+Arch Linux and CachyOS do not provide a native `lib32-libcap` package in the official repositories, which causes linker errors during 32-bit builds. Additionally, the default staging paths require adjustments to integrate properly with system loader directories.
+
+Use the steps below to build and install both architectures cleanly.
+
+---
+
+### 1. Install Dependencies
+
+Install required development packages from official repositories and `lib32-libcap` from the AUR:
+
+```bash
+# Official multilib & build dependencies
+sudo pacman -S --needed \
+    gcc-multilib \
+    meson \
+    ninja \
+    glslang \
+    lib32-libx11 \
+    lib32-libxkbcommon \
+    lib32-wayland \
+    lib32-libdrm \
+    lib32-libglvnd \
+    lib32-vulkan-icd-loader \
+    xorgproto \
+    jre-openjdk
+
+# AUR dependency (required for 32-bit process metrics)
+paru -S --needed lib32-libcap
+# or: yay -S --needed lib32-libcap
+```
+
+### 2. Build Both Architectures
+Run the upstream build script with your preferred configuration options:
+
+```bash
+# Clean up previous build directories
+rm -rf build build32
+
+# Build both 64-bit and 32-bit targets
+./build.sh build -Dwith_xnvctrl=disabled
+```
+
+### 3. Install to System Directories
+Install the compiled binaries to Arch-standard paths (/usr/lib and /usr/lib32) and update the Vulkan implicit layer manifests:
+
+```bash
+# 1. Install 64-bit libraries
+sudo install -d /usr/lib/mangohud
+sudo install -m755 build/release/usr/lib/mangohud/lib64/*.so /usr/lib/mangohud/
+
+# 2. Install 32-bit libraries to /usr/lib32
+sudo install -d /usr/lib32/mangohud
+sudo install -m755 build/release/usr/lib/mangohud/lib32/*.so /usr/lib32/mangohud/
+
+# 3. Install the mangohud launcher script
+sudo install -m755 build/release/usr/bin/mangohud /usr/bin/mangohud
+
+# 4. Copy Vulkan layer manifests and fix staging paths
+sudo cp -r build/release/usr/share/vulkan/implicit_layer.d/* /usr/share/vulkan/implicit_layer.d/
+
+sudo sed -i 's|.*/usr/lib/mangohud/lib32|/usr/lib32/mangohud|g' /usr/share/vulkan/implicit_layer.d/MangoHud*.x86.json
+sudo sed -i 's|.*/usr/lib/mangohud/lib64|/usr/lib/mangohud|g' /usr/share/vulkan/implicit_layer.d/MangoHud*.x86_64.json
+
+# 5. Create compatibility symlinks for OpenGL loaders
+sudo ln -sfn /usr/lib32/mangohud /usr/lib/mangohud/lib32
+sudo ln -sfn /usr/lib/mangohud /usr/lib/mangohud/lib64
+```
+### 4. Verification
+Verify that both shared objects are present and target the correct architectures:
+
+```bash
+file /usr/lib/mangohud/libMangoHud.so
+# Expected: ELF 64-bit LSB shared object
+
+file /usr/lib32/mangohud/libMangoHud.so
+# Expected: ELF 32-bit LSB shared object
+
+cat /usr/share/vulkan/implicit_layer.d/MangoHud.x86.json | grep library_path
+# Expected: "library_path": "/usr/lib32/mangohud/libMangoHud.so"
+```
+
+
 ## What's New in MangoHud-X?
 
 Unlike the upstream project, **MangoHud-X** introduces a complete custom layout engine designed for modular, modern, and highly customized HUD overlays.
@@ -37,7 +121,7 @@ Unlike the upstream project, **MangoHud-X** introduces a complete custom layout 
 
 ---
 
-## Initial config that shows posibilities
+## Initial config that shows possibilities
 
 ```bash
 # Default MangoHud factory positioning:
@@ -55,7 +139,7 @@ gpu_fan
 vram
 
 
-font_file = /home/damian/.config/MangoHud/fonts/NotoSans-Bold.ttf
+font_file = ~/.config/MangoHud/fonts/NotoSans-Bold.ttf
 font_size = 22
 
 [window]
@@ -191,7 +275,7 @@ row {
 
 ## EXAMPLE dir
 
-In EXAMPLE dir you can find my testing config that will show you usage and posibilities of new layout engine. After instalation just copy files inside EXAMPLE to /home/USER/.config/MangoHud/
+In EXAMPLE dir you can find my testing config that will show you usage and possibilities of new layout engine. After instalation just copy files inside EXAMPLE to /home/USER/.config/MangoHud/
 
 * **Included Font:** The example uses *Noto Sans Bold* (`NotoSans-Bold.ttf`), which is licensed under the permissive **SIL Open Font License, Version 1.1 (SIL OFL 1.1)**, allowing free use, modification, and redistribution.
 
