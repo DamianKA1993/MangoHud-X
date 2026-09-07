@@ -4,9 +4,7 @@ An enhanced fork of [MangoHud](https://github.com/flightlessmango/MangoHud) feat
 
 ---
 
-![mangohud-x-nvidia](assets/mangohud-x-nvidia.png)
-
-![mangohud-x-nvidia](assets/mangohud-x-amd.png)
+![mangohud-x](assets/mangohud-x.png)
 
 ## 🚀 Installation
 
